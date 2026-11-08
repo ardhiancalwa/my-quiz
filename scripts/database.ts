@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { neon } from "@neondatabase/serverless";
 import { bank } from "../content/bank";
+import { examPackages } from "../content/packages";
 import { validateBank, report } from "./content";
 if (!process.env.DATABASE_URL)
   throw new Error("Set DATABASE_URL in .env.local.");
@@ -65,28 +66,42 @@ if (process.argv[2] === "migrate") {
       return queries;
     }),
   );
-  if (
+  const completeBatch =
+    source &&
     questions.length === 140 &&
     ["listening", "grammar", "reading"].every(
       (s, i) =>
         questions.filter((q) => q.section === s).length === [50, 40, 50][i],
-    )
-  ) {
-    const packageId = source
-      ? source
-          .split(/[\\/]/)
-          .at(-1)!
-          .replace(/\.json$/, "")
-      : "original-demo-1";
-    const ordered = ["listening", "grammar", "reading"].flatMap((s) =>
-      questions.filter((q) => q.section === s),
     );
+  const packs = completeBatch
+    ? [
+        {
+          id: source!
+            .split(/[\\/]/)
+            .at(-1)!
+            .replace(/\.json$/, ""),
+          name: source!
+            .split(/[\\/]/)
+            .at(-1)!
+            .replace(/\.json$/, ""),
+          questionIds: ["listening", "grammar", "reading"].flatMap((s) =>
+            questions.filter((q) => q.section === s).map((q) => q.id),
+          ),
+        },
+      ]
+    : examPackages;
+  for (const pack of packs) {
+    const ordered = pack.questionIds.map((id) =>
+      questions.find((q) => q.id === id),
+    );
+    if (ordered.some((q) => !q)) continue;
+    const packageId = pack.id;
     await sql.transaction([
-      sql`INSERT INTO exam_packages(id,name,status) VALUES(${packageId},${packageId},${questions.every((q) => q.status === "published") ? "published" : "draft"}) ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status`,
+      sql`INSERT INTO exam_packages(id,name,status) VALUES(${packageId},${pack.name},${ordered.every((q) => q!.status === "published") ? "published" : "draft"}) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,status=EXCLUDED.status`,
       sql`DELETE FROM exam_package_questions WHERE package_id=${packageId}`,
       ...ordered.map(
         (q, i) =>
-          sql`INSERT INTO exam_package_questions(package_id,question_id,ordinal) VALUES(${packageId},${q.id},${i})`,
+          sql`INSERT INTO exam_package_questions(package_id,question_id,ordinal) VALUES(${packageId},${q!.id},${i})`,
       ),
     ]);
   }

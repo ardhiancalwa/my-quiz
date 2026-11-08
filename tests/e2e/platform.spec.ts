@@ -142,6 +142,7 @@ test("exam deadline survives refresh and sections advance without revealing answ
   page,
 }) => {
   await page.goto("/simulasi");
+  await page.getByLabel("Paket simulasi").selectOption("original-demo-3");
   await page.getByLabel("Saya sudah mendengar audio dengan jelas.").check();
   await page
     .getByRole("button", { name: "Mulai simulasi", exact: true })
@@ -174,6 +175,22 @@ test("exam deadline survives refresh and sections advance without revealing answ
 test("API rejects invalid input, mismatched IDs and tampered tokens", async ({
   request,
 }) => {
+  const added = await request.post("/api/session", {
+    data: { mode: "practice", ids: ["reading-350"], count: 5 },
+  });
+  expect(added.ok()).toBe(true);
+  const addedSession = await added.json();
+  expect(addedSession.questions).toHaveLength(1);
+  expect(addedSession.questions[0].passage.title).toBe(
+    "Field notebooks that others can read",
+  );
+  expect(
+    (
+      await request.post("/api/session", {
+        data: { mode: "exam", packageId: "unknown-package" },
+      })
+    ).status(),
+  ).toBe(400);
   expect(
     (
       await request.post("/api/session", {

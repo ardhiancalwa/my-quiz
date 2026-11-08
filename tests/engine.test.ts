@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { bank } from "../content/bank";
+import { examPackages } from "../content/packages";
+import { selectPractice } from "../src/lib/selection";
 import { SECTIONS, publicQuestion, type Answers } from "../src/lib/contracts";
 import {
   advance,
@@ -14,13 +16,16 @@ import { parseImport } from "../src/lib/progress";
 import { body } from "../src/lib/http";
 import { z } from "zod";
 import { allowRequest } from "../src/lib/rate-limit";
+const examBank = examPackages[0].questionIds.map((id) =>
+  bank.find((q) => q.id === id)!,
+);
 const claim = (): Claim => ({
   id: crypto.randomUUID(),
   mode: "exam",
   ids: SECTIONS.flatMap((s) =>
-    bank.filter((q) => q.section === s.id).map((q) => q.id),
+    examBank.filter((q) => q.section === s.id).map((q) => q.id),
   ),
-  versions: bank.map((q) => q.version),
+  versions: examBank.map((q) => q.version),
   stage: 0,
   startedAt: Date.now(),
   deadline: Date.now() + 45 * 60000,
@@ -28,13 +33,70 @@ const claim = (): Claim => ({
 });
 afterEach(() => vi.useRealTimers());
 describe("question bank", () => {
-  it("contains exactly one complete original draft package", () => {
-    expect(validateBank(bank, true)).toHaveLength(140);
+  it("contains 720 unique draft questions with complete explanations and audio", () => {
+    expect(validateBank(bank, true)).toHaveLength(720);
     expect(
       SECTIONS.map((s) => bank.filter((q) => q.section === s.id).length),
-    ).toEqual([50, 40, 50]);
-    expect(bank.filter((q) => q.type === "completion")).toHaveLength(15);
-    expect(bank.filter((q) => q.type === "error")).toHaveLength(25);
+    ).toEqual([150, 220, 350]);
+    expect(bank.filter((q) => q.type === "completion")).toHaveLength(75);
+    expect(bank.filter((q) => q.type === "error")).toHaveLength(145);
+    expect(new Set(bank.map((q) => q.id)).size).toBe(720);
+  });
+  it("provides three disjoint complete exam packages plus 300 extra practice questions", () => {
+    const assigned = new Set<string>();
+    for (const pack of examPackages) {
+      const questions = pack.questionIds.map((id) =>
+        bank.find((q) => q.id === id)!,
+      );
+      expect(questions).toHaveLength(140);
+      expect(questions.every(Boolean)).toBe(true);
+      expect(
+        SECTIONS.map((s) => questions.filter((q) => q.section === s.id).length),
+      ).toEqual([50, 40, 50]);
+      expect(
+        [
+          "short-dialogue",
+          "long-dialogue",
+          "lecture",
+          "completion",
+          "error",
+        ].map((type) => questions.filter((q) => q.type === type).length),
+      ).toEqual([30, 10, 10, 15, 25]);
+      for (const q of questions) {
+        expect(assigned.has(q.id)).toBe(false);
+        assigned.add(q.id);
+      }
+    }
+    expect(assigned.size).toBe(420);
+    expect(bank.filter((q) => !assigned.has(q.id))).toHaveLength(300);
+  });
+  it("rejects duplicate context even if the IDs are changed", () => {
+    const q = bank.find((q) => q.section === "reading")!;
+    expect(() =>
+      validateBank([
+        q,
+        {
+          ...q,
+          id: "cloned-question",
+          passage: { ...q.passage!, id: "cloned-passage" },
+        },
+      ]),
+    ).toThrow("Duplicate stem");
+  });
+  it("makes new practice selections while preserving passage/audio group order", () => {
+    const input = bank.filter((q) => q.section === "reading");
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const selected = selectPractice(input, 20);
+      expect(selected).toHaveLength(20);
+      expect(new Set(selected.map((q) => q.id)).size).toBe(20);
+      expect(selected[0].id).not.toBe(input[0].id);
+      expect(
+        new Set(selected.slice(0, 10).map((q) => q.passage!.id)).size,
+      ).toBe(1);
+    } finally {
+      random.mockRestore();
+    }
   });
   it("rejects duplicate IDs and content without human review when published", () => {
     expect(() => validateBank([bank[0], bank[0]])).toThrow("Duplicate");
@@ -70,45 +132,55 @@ describe("exam integrity", () => {
     expect(next).toHaveProperty("stage", 1);
     expect(next).toHaveProperty("deadline", c.deadline! + 25 * 60000);
   });
-  it("scores all 140 questions only after the final section", () => {
-    const c = claim();
-    const answers = Object.fromEntries(
-      bank.map((q) => [q.id, q.correct]),
-    ) as Answers;
-    const listen = advance(
-      c,
-      Object.fromEntries(
-        bank
-          .filter((q) => q.section === "listening")
-          .map((q) => [q.id, q.correct]),
-      ),
-      bank,
-    );
-    expect(listen).not.toHaveProperty("reviews");
-    if (!("token" in listen)) throw new Error("expected stage");
-    const grammar = advance(
-      verify(listen.token),
-      Object.fromEntries(
-        bank
-          .filter((q) => q.section === "grammar")
-          .map((q) => [q.id, q.correct]),
-      ),
-      bank,
-    );
-    if (!("token" in grammar)) throw new Error("expected stage");
-    const result = advance(
-      verify(grammar.token),
-      Object.fromEntries(
-        bank
-          .filter((q) => q.section === "reading")
-          .map((q) => [q.id, q.correct]),
-      ),
-      bank,
-    );
-    expect(result).toHaveProperty("correct", 140);
-    expect(result).toHaveProperty("total", 140);
-    expect(Object.keys(answers)).toHaveLength(140);
-  });
+  it.each(examPackages)(
+    "scores all 140 questions only after the final section: $name",
+    (pack) => {
+      const examBank = pack.questionIds.map((id) =>
+        bank.find((q) => q.id === id)!,
+      );
+      const c = {
+        ...claim(),
+        ids: examBank.map((q) => q.id),
+        versions: examBank.map((q) => q.version),
+      };
+      const answers = Object.fromEntries(
+        examBank.map((q) => [q.id, q.correct]),
+      ) as Answers;
+      const listen = advance(
+        c,
+        Object.fromEntries(
+          examBank
+            .filter((q) => q.section === "listening")
+            .map((q) => [q.id, q.correct]),
+        ),
+        bank,
+      );
+      expect(listen).not.toHaveProperty("reviews");
+      if (!("token" in listen)) throw new Error("expected stage");
+      const grammar = advance(
+        verify(listen.token),
+        Object.fromEntries(
+          examBank
+            .filter((q) => q.section === "grammar")
+            .map((q) => [q.id, q.correct]),
+        ),
+        bank,
+      );
+      if (!("token" in grammar)) throw new Error("expected stage");
+      const result = advance(
+        verify(grammar.token),
+        Object.fromEntries(
+          examBank
+            .filter((q) => q.section === "reading")
+            .map((q) => [q.id, q.correct]),
+        ),
+        bank,
+      );
+      expect(result).toHaveProperty("correct", 140);
+      expect(result).toHaveProperty("total", 140);
+      expect(Object.keys(answers)).toHaveLength(140);
+    },
+  );
   it("rejects answers for questions outside the current section", () => {
     expect(() => advance(claim(), { "grammar-1": "A" }, bank)).toThrow(
       "di luar sesi",

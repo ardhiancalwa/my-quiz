@@ -9,7 +9,7 @@ https://lac.telkomuniversity.ac.id/layanan/tes-bahasa/eprt/ adalah acuan jumlah,
 3. Jalankan `npx tsx scripts/content.ts check path/to/batch.json`. Validator mendeteksi exact normalized stem duplicates, bukan semua paraphrase. Review kemiripan semantik tetap diperlukan.
 4. Review manusia untuk kunci, ambiguitas, distractors, grammar, kealamian bahasa, dan bukti. Untuk error recognition, pastikan tepat satu bagian salah. Untuk Listening, dengarkan seluruh file, verifikasi isi dan hak distribusi.
 5. Setelah review nyata, isi reviewedBy, reviewedAt ISO, status validated/published, dan naikkan version. Jangan mengisi reviewer atas nama orang yang belum memeriksa.
-6. Jalankan import privat. Tidak ada mutation endpoint publik. Batch berisi paket lengkap 50/40/50 juga mengisi exam_packages dan relasinya; paket published hanya jika seluruh soal published. Bank produksi mengambil paket published pertama secara deterministik. Perluas pemilihan paket saat tersedia beberapa paket yang telah direview.
+6. Jalankan import privat. Tidak ada mutation endpoint publik. Import bank bawaan mengisi tiga paket dari content/packages.ts; batch JSON lengkap 50/40/50 juga dapat menjadi paket dengan ID dari nama file. Paket published hanya jika seluruh soal published. Pengguna memilih paket yang tersedia; produksi hanya menampilkan paket published.
 7. Jalankan content report dan periksa jumlah published. Simpan laporan review dengan batch.
 
 ## Database
@@ -29,7 +29,7 @@ Import dapat dijalankan ulang tanpa membuat baris ganda. Perubahan konten dengan
 Snapshot/backup: sebelum migrasi atau import published, gunakan fasilitas backup/branch Neon yang tersedia pada plan dan simpan export privat `pg_dump` pada penyimpanan operator yang aman. Uji restore ke branch terpisah. Ketersediaan restore window/branch perlu diperiksa pada dashboard Marketplace; tidak diasumsikan gratis tanpa batas.
 
 ## Audio
-34 file MP3 demo berukuran total 3.72 MB. Mereka disajikan dari /public/audio, bukan Functions atau database. Regenerasi demo lokal: `npx tsx scripts/audio-manifest.ts`, lalu `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/audio.ps1`; membutuhkan Windows Speech dan ffmpeg. Ini workflow operator, tidak dijalankan saat deploy.
+102 file MP3 demo berukuran total 11.17 MB. Mereka disajikan dari /public/audio, bukan Functions atau database. Pembuatan audio lokal: `npx tsx scripts/audio-manifest.ts`, lalu `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/audio.ps1`; membutuhkan Windows Speech dan ffmpeg. File yang sudah ada dilewati agar penambahan tidak mengubah rekaman lama. Untuk merevisi rekaman, lakukan melalui workflow operator dengan versi konten yang sesuai. Ini tidak dijalankan saat deploy.
 
 Blob belum diperlukan untuk ukuran ini. Jika dipakai nanti, perluas validator URL audio ke allowlist hostname Blob milik proyek dan gunakan referensi yang disetujui. Tidak ada akses upload publik.
 
@@ -40,7 +40,7 @@ Diperiksa 8 November 2026, dapat berubah. Penawaran Neon di Marketplace harus di
 - [Neon](https://neon.com/pricing): halaman langsung menyebut Free 100 CU-jam per proyek/bulan, 1 GB storage per proyek, dan hingga 100 proyek. Batas koneksi/branch/retensi dan billing penawaran Marketplace belum dikonfirmasi pada akun pengguna.
 - [Vercel Blob](https://vercel.com/docs/vercel-blob/usage-and-pricing): Hobby 1 GB storage, 10 GB transfer, 10.000 simple operations, 2.000 advanced operations. Batas ini bukan alasan untuk menambah Blob sebelum dibutuhkan.
 
-Asumsi perencanaan (bukan pengukuran beban produksi): metadata+penjelasan sekitar 8 KB per soal dan audio mengikuti rasio draf ini. Pada 720 soal sekitar 5.8 MB dokumen dan 19 MB audio; pada 2.000 sekitar 16 MB dokumen dan 53 MB audio, belum termasuk indeks, representasi tabel normalisasi, dan variasi panjang rekaman. Tiga pemutaran ulang rata-rata melipatgandakan transfer tiga kali. 10.000 sesi simulasi dengan 3.72 MB audio per sesi sekitar 37.2 GB transfer audio, belum termasuk halaman/font/API. Jika memakai Blob, angka itu melampaui 10 GB Hobby; static assets memakai kuota hosting. Compute Neon perlu diukur setelah traffic nyata, tidak bisa dipastikan dari jumlah soal.
+Ukuran artefak lokal terukur: 720 soal menghasilkan JSON sekitar 1.70 MB, termasuk bacaan/transcript yang muncul pada beberapa soal, dan 11.17 MB audio. Angka ini belum mencakup indeks database serta duplikasi kolom/tabel. Sebagai asumsi konservatif, alokasikan 8 KB dokumen per soal: sekitar 5.8 MB untuk 720 dan 16 MB untuk 2.000. Audio 2.000 soal diperkirakan sekitar 31 MB hanya bila proporsi Listening dan panjang rekaman tetap sama; ini bukan pengukuran beban produksi. Audio tiap paket simulasi terukur 3.70–3.75 MB. Tiga pemutaran total melipatgandakan transfer tiga kali. Sebanyak 10.000 sesi dengan 3.72 MB audio per sesi sekitar 37.2 GB transfer audio, belum termasuk halaman/font/API. Jika memakai Blob, angka itu melampaui 10 GB Hobby; static assets memakai kuota hosting. Compute Neon perlu diukur setelah traffic nyata, tidak bisa dipastikan dari jumlah soal.
 
 ## Deployment
 1. Push source ke https://github.com/ardhiancalwa/my-quiz.

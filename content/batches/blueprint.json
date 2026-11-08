@@ -33,5 +33,6 @@
     "import draft",
     "publish reviewed content only"
   ],
-  "questionsNeededForMvp": 720
+  "questionsNeededForMvp": 720,
+  "draftsNeededForMvp": 0
 }

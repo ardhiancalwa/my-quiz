@@ -12,6 +12,7 @@ foreach ($asset in (Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Js
   if ($asset.id -notmatch '^[a-z0-9-]+$') { throw 'Invalid audio id' }
   $wavPath = Join-Path $wavRoot ($asset.id + '.wav')
   $mp3Path = Join-Path $outputRoot ($asset.id + '.mp3')
+  if ((Test-Path -LiteralPath $mp3Path) -and (Get-Item -LiteralPath $mp3Path).Length -gt 0) { continue }
   $synthesizer.SetOutputToWaveFile($wavPath)
   $synthesizer.Speak($asset.text)
   $synthesizer.SetOutputToNull()

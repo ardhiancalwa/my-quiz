@@ -3,8 +3,14 @@ import { getBank, getExamBank } from "@/lib/content";
 import { sectionSchema, SECTIONS } from "@/lib/contracts";
 import { sessionFor } from "@/lib/engine";
 import { body, failure } from "@/lib/http";
+import { selectPractice } from "@/lib/selection";
 const schema = z.object({
   mode: z.enum(["practice", "exam"]),
+  packageId: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .max(100)
+    .optional(),
   section: sectionSchema.optional(),
   topic: z.string().max(100).optional(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional(),
@@ -15,7 +21,9 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const input = await body(request, schema);
-    const bank = await (input.mode === "exam" ? getExamBank() : getBank());
+    const bank = await (input.mode === "exam"
+      ? getExamBank(input.packageId)
+      : getBank());
     let selected = bank.filter(
       (q) =>
         (!input.section || q.section === input.section) &&
@@ -37,7 +45,7 @@ export async function POST(request: Request) {
           "Belum tersedia paket lengkap 140 soal. Pilih latihan per bagian.",
         );
     } else {
-      selected = selected.slice(0, input.count);
+      selected = selectPractice(selected, input.count);
     }
     if (!selected.length)
       throw new Error("Tidak ada soal yang cocok. Coba filter lain.");

@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { bank } from "../content/bank";
+import { examPackages } from "../content/packages";
 import { questionSchema, SECTIONS, type Question } from "../src/lib/contracts";
 export function validateBank(input: unknown[], audioCheck = false) {
   const questions = input.map((q) => questionSchema.parse(q));
@@ -13,7 +14,7 @@ export function validateBank(input: unknown[], audioCheck = false) {
     const stem = (
       q.prompt === "Which underlined part needs correction?"
         ? (q.segments ?? []).map((s) => s.text).join(" ")
-        : q.prompt + (q.passage?.id ?? "") + (q.audio?.id ?? "")
+        : q.prompt + (q.passage?.text ?? "") + (q.audio?.transcript ?? "")
     )
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "");
@@ -65,6 +66,16 @@ export function report(questions: Question[]) {
     uniqueAudio: new Set(
       questions.filter((q) => q.audio).map((q) => q.audio!.id),
     ).size,
+    packages: examPackages.map((p) => ({
+      id: p.id,
+      name: p.name,
+      questions: p.questionIds.filter((id) =>
+        questions.some((q) => q.id === id),
+      ).length,
+    })),
+    additionalPractice: questions.filter(
+      (q) => !examPackages.some((p) => p.questionIds.includes(q.id)),
+    ).length,
     warning:
       "Schema checks do not establish semantic correctness, originality, licensing or human review.",
   };
@@ -101,8 +112,11 @@ if (process.argv[1]?.replace(/\\/g, "/").endsWith("/scripts/content.ts")) {
             "import draft",
             "publish reviewed content only",
           ],
-          questionsNeededForMvp:
+          questionsNeededForMvp: Math.max(
+            0,
             720 - questions.filter((q) => q.status !== "draft").length,
+          ),
+          draftsNeededForMvp: Math.max(0, 720 - questions.length),
         },
         null,
         2,

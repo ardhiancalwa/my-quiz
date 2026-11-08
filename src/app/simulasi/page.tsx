@@ -1,7 +1,8 @@
 import { PracticeSetup } from "@/components/practice-setup";
-import { getBank, isDemo } from "@/lib/content";
+import { getBank, getExamPackages, isDemo } from "@/lib/content";
 export const dynamic = "force-dynamic";
 export default async function Exam() {
+  const packages = await getExamPackages().catch(() => []);
   const bank = await getBank().catch(() => null);
   if (!bank)
     return (
@@ -14,6 +15,7 @@ export default async function Exam() {
     <div className="wrap page-space">
       <PracticeSetup
         exam
+        packages={packages}
         topics={[]}
         demo={isDemo}
         counts={Object.fromEntries(

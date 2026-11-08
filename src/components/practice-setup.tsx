@@ -17,12 +17,14 @@ export function PracticeSetup({
   counts,
   demo,
   exam = false,
+  packages = [],
 }: {
   initial?: Section;
   topics: { section: Section; topic: string }[];
   counts: Record<string, number>;
   demo: boolean;
   exam?: boolean;
+  packages?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { progress, ready, storageError, update } = useProgress();
@@ -34,6 +36,7 @@ export function PracticeSetup({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [audioChecked, setAudioChecked] = useState(false);
+  const [packageId, setPackageId] = useState(packages[0]?.id ?? "");
   async function start() {
     setBusy(true);
     setError("");
@@ -56,6 +59,7 @@ export function PracticeSetup({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: exam ? "exam" : "practice",
+          packageId: exam ? packageId : undefined,
           section: exam ? undefined : section,
           topic: topic || undefined,
           difficulty: difficulty || undefined,
@@ -104,6 +108,20 @@ export function PracticeSetup({
         )}
         {exam ? (
           <div className="panel exam-instructions">
+            <label className="check-label">
+              Paket simulasi
+              <select
+                aria-label="Paket simulasi"
+                value={packageId}
+                onChange={(e) => setPackageId(e.target.value)}
+              >
+                {packages.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <h2>Kenali alurnya dulu.</h2>
             <ol>
               {SECTIONS.map((s) => (

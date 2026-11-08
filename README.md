@@ -23,16 +23,19 @@ npm run start
 
 - Landing, pengaturan latihan, dashboard progres, hasil dan pembahasan.
 - Filter bagian, topik, kesulitan, soal baru, dan soal yang pernah salah.
-- Satu paket simulasi draf lengkap: Listening 50/45 menit, Grammar 40/25, Reading 50/55.
+- Tiga paket simulasi draf lengkap tanpa soal berulang antar paket: masing-masing Listening 50/45 menit, Grammar 40/25, Reading 50/55. Paket dapat dipilih sebelum mulai.
+- Pilihan latihan diacak per kelompok bacaan/audio; 300 soal tambahan tersedia di luar tiga paket simulasi.
 - Sesi ditandatangani server; kunci jawaban dan transcript tidak disertakan sebelum submit.
 - Timer per bagian mempertahankan deadline saat refresh; waktu habis memicu submit otomatis. Saat offline, jawaban tetap lokal dan pengiriman dapat dicoba kembali.
-- 34 rekaman audio demo MP3 lokal (mono, 24 kHz, 48 kbps). Replay/kecepatan tersedia pada latihan; simulasi mencatat audio yang sudah dimulai.
+- 102 rekaman audio demo MP3 lokal (mono, 24 kHz, 48 kbps), total 11.17 MB. Replay/kecepatan tersedia pada latihan; simulasi mencatat audio yang sudah dimulai.
 - Autosave, resume, bookmarks, riwayat kesalahan, statistik, rekomendasi aturan sederhana, export/import JSON tervalidasi, reset progres.
 - Migrations dan import idempotent dengan pemeriksaan versi konten dan metadata reviewer.
 
 ## Status konten
 
-140 soal **draf**, 0 soal tervalidasi manusia, 0 published. Struktur, kelengkapan, jumlah, referensi audio, dan duplikasi stem diperiksa otomatis; itu bukan validasi semantik atau review pengajar. Target 720 soal MVP dan 2.000 ekspansi belum tercapai. Jangan menggandakan soal untuk memenuhi target.
+720 soal **draf**: 150 Listening, 220 Grammar, dan 350 Reading dalam 35 passage. Tiga paket memakai 420 soal berbeda dan latihan tambahan memakai 300 soal lainnya. Seluruh 140 soal awal dipertahankan tanpa perubahan.
+
+0 soal tervalidasi manusia, 0 published. Struktur, kelengkapan, jumlah, referensi audio, dan duplikasi stem beserta konteks bacaan/transcript diperiksa otomatis; itu bukan validasi semantik atau review pengajar. Jumlah draf telah mencapai 720, tetapi target 720 soal tervalidasi MVP dan 2.000 ekspansi belum tercapai. Jangan menggandakan soal untuk memenuhi target.
 
 Rekaman demo dibuat secara offline dengan Windows Speech (Microsoft Zira), menggunakan teks asli proyek. Pronunciation, intonasi, dan hak distribusi suara harus ditinjau operator sebelum publikasi materi pembelajaran. Tidak ada rekaman atau passage dari tautan contoh yang disalin ke bank ini.
 

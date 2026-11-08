@@ -1,14 +1,32 @@
 {
-  "generatedAt": "2026-11-08T06:22:45.349Z",
-  "total": 140,
-  "draft": 140,
+  "generatedAt": "2026-11-08T06:56:50.628Z",
+  "total": 720,
+  "draft": 720,
   "validated": 0,
   "published": 0,
   "sections": {
-    "listening": 50,
-    "grammar": 40,
-    "reading": 50
+    "listening": 150,
+    "grammar": 220,
+    "reading": 350
   },
-  "uniqueAudio": 34,
+  "uniqueAudio": 102,
+  "packages": [
+    {
+      "id": "original-demo-1",
+      "name": "Paket 01",
+      "questions": 140
+    },
+    {
+      "id": "original-demo-2",
+      "name": "Paket 02",
+      "questions": 140
+    },
+    {
+      "id": "original-demo-3",
+      "name": "Paket 03",
+      "questions": 140
+    }
+  ],
+  "additionalPractice": 300,
   "warning": "Schema checks do not establish semantic correctness, originality, licensing or human review."
 }
