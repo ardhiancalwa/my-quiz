@@ -1,0 +1,37 @@
+{
+  "targetMvp": 720,
+  "targetExpansion": 2000,
+  "sections": [
+    {
+      "id": "listening",
+      "name": "Listening",
+      "count": 50,
+      "minutes": 45,
+      "description": "Dengarkan, pahami, lalu jawab."
+    },
+    {
+      "id": "grammar",
+      "name": "Grammar",
+      "count": 40,
+      "minutes": 25,
+      "description": "Kenali pola dan struktur kalimat."
+    },
+    {
+      "id": "reading",
+      "name": "Reading",
+      "count": 50,
+      "minutes": 55,
+      "description": "Temukan jawaban di dalam bacaan."
+    }
+  ],
+  "steps": [
+    "author original batch",
+    "validate schema",
+    "semantic and distractor review",
+    "audio and license review",
+    "human reviewer metadata",
+    "import draft",
+    "publish reviewed content only"
+  ],
+  "questionsNeededForMvp": 720
+}

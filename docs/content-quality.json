@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-11-08T06:22:45.349Z",
+  "total": 140,
+  "draft": 140,
+  "validated": 0,
+  "published": 0,
+  "sections": {
+    "listening": 50,
+    "grammar": 40,
+    "reading": 50
+  },
+  "uniqueAudio": 34,
+  "warning": "Schema checks do not establish semantic correctness, originality, licensing or human review."
+}

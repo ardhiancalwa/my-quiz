@@ -1,0 +1,49 @@
+{
+  "name": "eprt-practice",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "content:check": "tsx scripts/content.ts check",
+    "content:report": "tsx scripts/content.ts report",
+    "db:migrate": "tsx --env-file=.env.local scripts/database.ts migrate",
+    "db:import": "tsx --env-file=.env.local scripts/database.ts import",
+    "content:blueprint": "tsx scripts/content.ts blueprint"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
+  },
+  "dependencies": {
+    "@fontsource/ubuntu": "^5.2.0",
+    "@neondatabase/serverless": "^1.0.2",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.577.0",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "^4.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
