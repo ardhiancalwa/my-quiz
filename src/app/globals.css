@@ -1,4 +1,61 @@
 @import "tailwindcss";
+.explanation-rule,
+.corrected-sentence {
+  padding: 16px 18px;
+  background: #f8f6fa;
+  border-left: 3px solid #8f4268;
+  border-radius: 5px;
+  margin-top: 18px;
+  font-size: 13px;
+}
+.corrected-sentence {
+  background: #f1f7e9;
+  border-left-color: #639727;
+}
+.corrected-sentence > span {
+  font-size: 11px;
+  font-weight: 500;
+}
+.reasoning-steps {
+  list-style: decimal;
+  padding-left: 24px;
+  margin: 12px 0 22px;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.reasoning-steps li {
+  padding-left: 6px;
+  margin-block: 9px;
+}
+.reasoning-steps li::marker {
+  font-weight: 700;
+  color: #963963;
+}
+.distractor-explanation {
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid #e5dfe9;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.distractor-explanation > strong {
+  font-size: 13px;
+}
+.distractor-explanation > p {
+  margin-bottom: 0;
+}
+.learning-tip h3 {
+  margin-top: 0 !important;
+}
+.mini-example {
+  padding: 0 0 16px;
+}
+.mini-example h3 {
+  font-size: 14px;
+}
+.notice .button {
+  margin-top: 12px;
+}
 .native-dialog {
   margin: auto;
   color: var(--ink);

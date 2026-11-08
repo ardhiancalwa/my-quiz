@@ -1,15 +1,102 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowRight, Bookmark, Check, X } from "lucide-react";
-import { SECTIONS } from "@/lib/contracts";
+import { SECTIONS, type Result, type Review } from "@/lib/contracts";
 import { useProgress } from "./use-progress";
 export function ResultView() {
   const { id } = useParams<{ id: string }>();
   const { progress, ready, update } = useProgress();
   const [onlyWrong, setOnlyWrong] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
   const result = progress.history.find((r) => r.id === id);
+  const requestAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => requestAbort.current?.abort(), [id]);
+  async function refreshExplanations() {
+    if (!result) return;
+    setRefreshing(true);
+    setRefreshError("");
+    const controller = new AbortController();
+    requestAbort.current = controller;
+    try {
+      const fresh = new Map<string, Review>();
+      for (let i = 0; i < result.reviews.length; i += 50) {
+        const batch = result.reviews.slice(i, i + 50);
+        const started = await fetch("/api/session", {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "practice",
+            ids: batch.map((r) => r.question.id),
+            count: 50,
+          }),
+        });
+        const session = await started.json();
+        if (!started.ok) throw new Error(session.error);
+        const submitted = await fetch("/api/submit", {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: session.token,
+            answers: Object.fromEntries(
+              batch
+                .filter((r) => r.selected)
+                .map((r) => [r.question.id, r.selected]),
+            ),
+          }),
+        });
+        const graded = await submitted.json();
+        if (!submitted.ok) throw new Error(graded.error);
+        for (const review of (graded as Result).reviews) {
+          if (!review.explanation.steps)
+            throw new Error(
+              "Pembahasan terbaru belum tersedia untuk soal ini. Coba lagi nanti.",
+            );
+          fresh.set(review.question.id, review);
+        }
+      }
+      const reviews = result.reviews.map((old) => {
+        const current = fresh.get(old.question.id);
+        if (
+          !current ||
+          current.correct !== old.correct ||
+          current.question.prompt !== old.question.prompt ||
+          JSON.stringify(current.question.options) !==
+            JSON.stringify(old.question.options) ||
+          JSON.stringify(current.question.segments) !==
+            JSON.stringify(old.question.segments) ||
+          current.question.passage?.text !== old.question.passage?.text ||
+          current.question.audio?.transcript !==
+            old.question.audio?.transcript ||
+          current.question.audio?.url !== old.question.audio?.url
+        )
+          throw new Error(
+            "Versi soal sudah berubah. Ulangi latihan untuk mendapatkan pembahasan yang sesuai.",
+          );
+        return { ...old, explanation: current.explanation };
+      });
+      if (controller.signal.aborted) return;
+      await update((p) => ({
+        ...p,
+        history: p.history.map((r) =>
+          r.id === result.id ? { ...r, reviews } : r,
+        ),
+      }));
+    } catch (e) {
+      if (!controller.signal.aborted)
+        setRefreshError(
+          e instanceof Error
+            ? e.message
+            : "Pembahasan belum dapat diperbarui. Coba lagi.",
+        );
+    } finally {
+      setRefreshing(false);
+    }
+  }
   if (!ready) return <p>Memuat hasil…</p>;
   if (!result)
     return (
@@ -96,6 +183,26 @@ export function ResultView() {
           Hanya salah & kosong
         </label>
       </div>
+      {result.reviews.some((r) => !r.explanation.steps) && (
+        <div className="notice">
+          <p>
+            Hasil ini memakai pembahasan versi lama. Kamu bisa memuat penjelasan
+            terbaru tanpa mengubah nilai dan riwayat latihan.
+          </p>
+          <button
+            className="button white small"
+            disabled={refreshing}
+            onClick={() => void refreshExplanations()}
+          >
+            {refreshing ? "Memuat pembahasan…" : "Perbarui pembahasan"}
+          </button>
+        </div>
+      )}
+      {refreshError && (
+        <p className="error" role="alert">
+          {refreshError}
+        </p>
+      )}
       <div className="review-list">
         {result.reviews
           .filter((r) => !onlyWrong || r.selected !== r.correct)
@@ -155,21 +262,56 @@ export function ResultView() {
                     ))}
                   </div>
                   <h3>Mengapa jawaban ini benar?</h3>
-                  <p>{r.explanation.why}</p>
-                  <h3>Pilihan lainnya</h3>
-                  {r.question.options
-                    .filter((o) => o.id !== r.correct)
-                    .map((o) => (
-                      <p key={o.id}>
-                        <strong>{o.id}.</strong> {r.explanation.incorrect[o.id]}
-                      </p>
-                    ))}
+                  {r.explanation.why.split("\n\n").map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                  {r.explanation.rule && (
+                    <div className="explanation-rule">
+                      <strong>{r.explanation.concept}</strong>
+                      <p>{r.explanation.rule}</p>
+                    </div>
+                  )}
+                  {r.explanation.steps && (
+                    <>
+                      <h3>Cara menentukannya, langkah demi langkah</h3>
+                      <ol className="reasoning-steps">
+                        {r.explanation.steps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                    </>
+                  )}
+                  {r.explanation.correction && (
+                    <div className="corrected-sentence">
+                      <span>Kalimat setelah diperbaiki</span>
+                      <p>{r.explanation.correction.sentence}</p>
+                    </div>
+                  )}
                   {r.explanation.evidence && (
                     <>
-                      <h3>Bukti & konteks</h3>
+                      <h3>
+                        {r.question.section === "listening"
+                          ? "Bukti dari percakapan"
+                          : "Bukti dari bacaan"}
+                      </h3>
                       <p className="evidence">{r.explanation.evidence}</p>
                     </>
                   )}
+                  <h3>
+                    {r.question.type === "error"
+                      ? "Mengapa bagian lain tidak dipilih?"
+                      : "Mengapa pilihan lainnya salah?"}
+                  </h3>
+                  {r.question.options
+                    .filter((o) => o.id !== r.correct)
+                    .map((o) => (
+                      <div className="distractor-explanation" key={o.id}>
+                        <strong>
+                          {o.id}. {o.text}
+                        </strong>
+                        <p>{r.explanation.incorrect[o.id]}</p>
+                      </div>
+                    ))}
                   {r.question.audio && (
                     <>
                       <h3>Dengarkan kembali</h3>
@@ -183,9 +325,21 @@ export function ResultView() {
                     </>
                   )}
                   <div className="learning-tip">
-                    <strong>{r.explanation.concept}</strong>
+                    <h3>Tips & trik untuk soal serupa</h3>
                     <p>{r.explanation.tip}</p>
+                    {r.explanation.pitfall && (
+                      <>
+                        <strong>Jebakan yang perlu dihindari</strong>
+                        <p>{r.explanation.pitfall}</p>
+                      </>
+                    )}
                   </div>
+                  {r.explanation.example && (
+                    <div className="mini-example">
+                      <h3>Contoh pembanding</h3>
+                      <p>{r.explanation.example}</p>
+                    </div>
+                  )}
                   <button
                     className="text-link"
                     onClick={() =>

@@ -1632,6 +1632,7 @@ errors.forEach(([a, b, c, d, wrong, correction, topic], i) => {
     segments: parts.map((text, j) => ({ label: letters[j], text })),
     explanation: {
       ...q.explanation,
+      correction: { from: parts[wrong], to: correction, sentence: corrected },
       incorrect: Object.fromEntries(
         options
           .filter((_, j) => j !== wrong)

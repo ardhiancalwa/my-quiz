@@ -1,6 +1,7 @@
 import type { Question } from "../src/lib/contracts";
 import { make, letters, type Item } from "./factory";
 import { expandedBank } from "./expansion";
+import { improveExplanation } from "./teaching";
 const grammar: Item[] = [
   [
     "The collection of rare maps ___ in a locked cabinet.",
@@ -345,6 +346,11 @@ errors.forEach(([parts, wrong, correction, topic], i) => {
     segments: parts.map((text, j) => ({ label: letters[j], text })),
     explanation: {
       why,
+      correction: {
+        from: parts[wrong],
+        to: correction,
+        sentence: parts.map((p, j) => (j === wrong ? correction : p)).join(" "),
+      },
       concept: topic,
       tip: "Periksa keempat bagian; pilih satu yang perlu diperbaiki.",
       incorrect: Object.fromEntries(
@@ -1328,3 +1334,6 @@ passages.forEach((p, index) =>
   }),
 );
 bank.push(...expandedBank);
+// This revision changes explanations only, so existing sessions may retain their question version.
+for (let i = 0; i < bank.length; i++)
+  bank[i] = { ...improveExplanation(bank[i]), compatibleVersions: [1] };

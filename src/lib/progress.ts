@@ -2,6 +2,7 @@ import { openDB } from "idb";
 import { z } from "zod";
 import {
   EMPTY_PROGRESS,
+  explanationSchema,
   optionSchema,
   sectionSchema,
   type Progress,
@@ -64,13 +65,7 @@ const resultSchema = z
           question: publicSchema,
           selected: z.enum(["A", "B", "C", "D"]).optional(),
           correct: z.enum(["A", "B", "C", "D"]),
-          explanation: z.object({
-            why: z.string().max(10000),
-            incorrect: z.record(z.string(), z.string().max(10000)),
-            concept: z.string().max(500),
-            tip: z.string().max(2000),
-            evidence: z.string().max(30000).optional(),
-          }),
+          explanation: explanationSchema,
         }),
       )
       .max(140),

@@ -28,6 +28,20 @@ export const optionSchema = z.object({
   id: z.enum(["A", "B", "C", "D"]),
   text: z.string().min(1),
 });
+export const explanationSchema = z.object({
+  why: z.string().min(10).max(10000),
+  incorrect: z.record(z.string(), z.string().max(10000)),
+  concept: z.string().min(1).max(500),
+  tip: z.string().min(5).max(2000),
+  evidence: z.string().max(30000).optional(),
+  rule: z.string().max(3000).optional(),
+  steps: z.array(z.string().min(1).max(5000)).min(2).max(5).optional(),
+  pitfall: z.string().max(2000).optional(),
+  example: z.string().max(3000).optional(),
+  correction: z
+    .object({ from: z.string(), to: z.string(), sentence: z.string() })
+    .optional(),
+});
 export const questionSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
   section: sectionSchema,
@@ -44,13 +58,7 @@ export const questionSchema = z.object({
   prompt: z.string().min(1),
   options: z.array(optionSchema).length(4),
   correct: z.enum(["A", "B", "C", "D"]),
-  explanation: z.object({
-    why: z.string().min(10),
-    incorrect: z.record(z.string(), z.string()),
-    concept: z.string().min(1),
-    tip: z.string().min(5),
-    evidence: z.string().optional(),
-  }),
+  explanation: explanationSchema,
   passage: z
     .object({ id: z.string(), title: z.string(), text: z.string() })
     .optional(),
@@ -71,6 +79,7 @@ export const questionSchema = z.object({
     )
     .optional(),
   version: z.number().int().positive(),
+  compatibleVersions: z.array(z.number().int().positive()).optional(),
   status: z.enum(["draft", "validated", "published"]),
   source: z.string(),
   license: z.string(),
@@ -80,7 +89,13 @@ export const questionSchema = z.object({
 export type Question = z.infer<typeof questionSchema>;
 export type PublicQuestion = Omit<
   Question,
-  "correct" | "explanation" | "source" | "license" | "reviewedBy" | "reviewedAt"
+  | "correct"
+  | "explanation"
+  | "source"
+  | "license"
+  | "reviewedBy"
+  | "reviewedAt"
+  | "compatibleVersions"
 >;
 export const answerSchema = z
   .record(z.string().regex(/^[a-z0-9-]+$/), z.enum(["A", "B", "C", "D"]))

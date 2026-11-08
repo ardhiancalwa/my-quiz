@@ -24,6 +24,7 @@ Next.js membaca `.env.local` saat build dan saat `npm run start`, sehingga mode 
 ## Yang tersedia
 
 - Landing, pengaturan latihan, dashboard progres, hasil dan pembahasan.
+- Pembahasan dengan aturan sederhana, langkah pengerjaan, alasan tiap pilihan, bukti bacaan/percakapan, serta tips, jebakan dan contoh. Hasil latihan lama dapat memuat pembahasan terbaru tanpa mengubah nilai. Lihat [panduan pembahasan](docs/EXPLANATIONS.md).
 - Filter bagian, topik, kesulitan, soal baru, dan soal yang pernah salah.
 - Tiga paket simulasi draf lengkap tanpa soal berulang antar paket: masing-masing Listening 50/45 menit, Grammar 40/25, Reading 50/55. Paket dapat dipilih sebelum mulai.
 - Pilihan latihan diacak per kelompok bacaan/audio; 300 soal tambahan tersedia di luar tiga paket simulasi.
@@ -35,7 +36,7 @@ Next.js membaca `.env.local` saat build dan saat `npm run start`, sehingga mode 
 
 ## Status konten
 
-720 soal **draf**: 150 Listening, 220 Grammar, dan 350 Reading dalam 35 passage. Tiga paket memakai 420 soal berbeda dan latihan tambahan memakai 300 soal lainnya. Seluruh 140 soal awal dipertahankan tanpa perubahan.
+720 soal **draf**: 150 Listening, 220 Grammar, dan 350 Reading dalam 35 passage. Tiga paket memakai 420 soal berbeda dan latihan tambahan memakai 300 soal lainnya. Materi, opsi, kunci, passage, dan audio soal awal dipertahankan; pembahasan telah diperbarui.
 
 0 soal tervalidasi manusia, 0 published. Struktur, kelengkapan, jumlah, referensi audio, dan duplikasi stem beserta konteks bacaan/transcript diperiksa otomatis; itu bukan validasi semantik atau review pengajar. Jumlah draf telah mencapai 720, tetapi target 720 soal tervalidasi MVP dan 2.000 ekspansi belum tercapai. Jangan menggandakan soal untuk memenuhi target.
 

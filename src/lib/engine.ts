@@ -52,7 +52,12 @@ export function verify(token: string): Claim {
 }
 export function questionsFor(claim: Claim, bank: Question[]) {
   const selected = claim.ids.map((id, i) => {
-    const q = bank.find((q) => q.id === id && q.version === claim.versions[i]);
+    const q = bank.find(
+      (q) =>
+        q.id === id &&
+        (q.version === claim.versions[i] ||
+          q.compatibleVersions?.includes(claim.versions[i])),
+    );
     if (!q) throw new Error("Versi soal berubah. Mulai sesi baru.");
     return q;
   });
@@ -114,7 +119,10 @@ export function advance(
     return grade(
       claim.ids.map((id, i) => {
         const q = bank.find(
-          (q) => q.id === id && q.version === claim.versions[i],
+          (q) =>
+            q.id === id &&
+            (q.version === claim.versions[i] ||
+              q.compatibleVersions?.includes(claim.versions[i])),
         );
         if (!q) throw new Error("Versi soal tidak tersedia.");
         return q;
