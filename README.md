@@ -11,13 +11,15 @@ npm ci
 npm run dev
 ```
 
-Buka http://127.0.0.1:3000. Development otomatis menggunakan bank draf demo; tidak memerlukan akun atau database. Untuk menjalankan build lokal:
+Buka http://127.0.0.1:3000. Development otomatis menggunakan bank draf demo; tidak memerlukan akun atau database. Untuk menjalankan build lokal, salin template sekali ke `.env.local` di root proyek. Jika file tersebut sudah ada, cukup tambahkan `CONTENT_MODE=demo` tanpa menimpa pengaturan lain.
 
 ```powershell
-$env:CONTENT_MODE='demo'
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 npm run build
 npm run start
 ```
+
+Next.js membaca `.env.local` saat build dan saat `npm run start`, sehingga mode demo tetap aktif setelah terminal dibuka ulang. File `.env.example` sendiri tidak dibaca otomatis. Setelah mengubah `.env.local`, jalankan ulang server. Tanpa mode demo, hasil build memang memerlukan database Neon dengan soal published; jangan mengubahnya menjadi fallback draf otomatis di produksi.
 
 ## Yang tersedia
 
